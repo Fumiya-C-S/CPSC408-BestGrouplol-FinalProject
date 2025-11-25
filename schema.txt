@@ -1,0 +1,90 @@
+
+CREATE TABLE Customer(
+    CustomerID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    Name VARCHAR(20),
+    Address VARCHAR(30),
+    Email VARCHAR(20)
+);
+
+ALTER TABLE Customer
+MODIFY COLUMN Email VARCHAR(100);
+
+CREATE TABLE Orders(
+    OrderID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    OrderDate DATE,
+    Total INT,
+    Status VARCHAR(30),
+    CustomerID INT,
+    FOREIGN KEY (CustomerID) REFERENCES Customer(CustomerID)
+);
+CREATE TABLE Product_View(
+    ProductID INT NOT NULL ,
+    CustomerID INT NOT NULL,
+    FOREIGN KEY (ProductID) REFERENCES Product(ProductID),
+    FOREIGN KEY (CustomerID) REFERENCES Customer(CustomerID),
+    PRIMARY KEY(ProductID, CustomerID)
+);
+
+CREATE TABLE Product(
+    ProductID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    Name VARCHAR(500),
+    Description VARCHAR(1024),
+    Price Float,
+    Category VARCHAR(225)
+);
+CREATE TABLE Order_Item(
+    OrderID INT NOT NULL ,
+    ProductID INT NOT NULL ,
+    Quantity INT,
+    Price Float,
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
+    FOREIGN KEY (ProductID) REFERENCES Product(ProductID),
+    PRIMARY KEY (OrderID, ProductID)
+);
+CREATE TABLE Categories(
+    CategoriesID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    ProductID INT NOT NULL,
+    ParentCategory VARCHAR(50),
+    Name VARCHAR(50),
+    FOREIGN KEY (ProductID) REFERENCES Product(ProductID)
+);
+CREATE TABLE Inventory(
+    InventoryID INT NOT NULL,
+    ProductID INT NOT NULL,
+    Location VARCHAR(100),
+    Quantity INT,
+    FOREIGN KEY (ProductID) REFERENCES Product(ProductID),
+    PRIMARY KEY (InventoryID, ProductID)
+);
+COMMIT;
+
+INSERT INTO Product VALUES(1,'Signature Slim Solar+ wireless keyboard K980','Enjoy the magic of light with a wireless keyboard powered by solar and artificial light that’s always ready, rain or shine. Innovative Logi LightCharge energy management makes Signature Slim Solar+ so easy to keep charged, it’s like magic.',99.99,'Keyboard')
+INSERT INTO Product VALUES(2,'Sony - WH-1000XM4 Wireless Noise-Cancelling Over-the-Ear Headphones - Midnight Blue', 'Sony’s intelligent noise canceling headphones with premium sound elevate your listening experience with the ability to personalize and control everything you hear. Get up to 30 hours of battery life with quick charging capabilities, enjoy an enhanced Smart Listening feature set, and carry conversations hands-free with speak-to-chat.',199.99,'Headphones')
+INSERT INTO Product VALUES(3,'HP - 27" IPS LED FHD 100Hz Monitor with Adjustable Height (HDMI, VGA) - Silver & Black', 'When you need the right tech to take on a day full of projects, meetings, and more, you need the HP Series 5 27-inch FHD Height Adjust Monitor. Its sleek design complements any workspace. And its beautiful screen, adjustable stand, and comfort features take your productivity to the next level. Bring flexibility to the way you work through enhanced visual performance, contrast ratio, and refresh rate.',149.99,'Monitor')
+
+INSERT INTO Categories VALUES(1,1,'Electronics','Keyboard');
+INSERT INTO Categories VALUES(2,2,'Electronics','Headphones');
+INSERT INTO Categories VALUES(3,3,'Electronics','Monitor');
+
+INSERT INTO Inventory VALUES (1,1,'Texas',10);
+INSERT INTO Inventory VALUES (2,2,'California',5);
+INSERT INTO Inventory VALUES (3,3,'Califonria',50);
+
+COMMIT;
+INSERT INTO Customer VALUES(1,'Miguel', '123 Chapman Ave.', 'mtellez@chapman.edu');
+INSERT INTO Customer VALUES(2,'Fumi', '300 Murchison Dr.', 'shinagawa@chapman.edu');
+INSERT INTO Customer VALUES(3,'Chris', '10904 Smash Center', 'chuy@chapman.edu');
+
+INSERT INTO Product_View VALUES(1,1);
+INSERT INTO Product_VIEW VALUES(2,2);
+INSERT INTO Product_VIEW VALUES(3,3);
+
+INSERT INTO Orders VALUES(1,NOW(), 13.99, 'Shipping', 1);
+INSERT INTO Orders VALUES(2,NOW(), 140.00, 'Ordered', 2);
+INSERT INTO Orders VALUES(3,NOW(), 34.89, 'Delivered', 3);
+
+INSERT INTO Order_Item VALUES(1,1,2,199.98);
+INSERT INTO Order_Item VALUES(2,1,1,99.99);
+INSERT INTO Order_Item VALUES(3,3,1,34.89);
+
+COMMIT;
