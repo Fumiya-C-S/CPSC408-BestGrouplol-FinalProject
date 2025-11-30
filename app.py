@@ -130,17 +130,26 @@ INSERT INTO Order_Item VALUES(2,1,1,99.99);
 INSERT INTO Order_Item VALUES(3,3,1,34.89);
 '''
 
+additional_random_inserts = '''
+INSERT INTO Orders VALUES(7, NOW(), 80.00, 'Ordered', 2);
+INSERT INTO Orders VALUES(5, NOW(), 255.00, 'Ordered', 2);
+INSERT INTO Orders VALUES(6, NOW(), 34.89, 'Shipping', 3);
+INSERT INTO Product VALUES(4, 'Alienware 27 Gaming Monitor - AW2725DM','Bring your favorite games to life in a 27” QHD gaming monitor featuring a Fast IPS panel, vivid color and smooth visuals.', 179.99,'Monitor')
+INSERT INTO Product VALUES(5, 'G SERIES G703 LIGHTSPEED Wireless Gaming Mouse', 'Featuring the advanced HERO 25K gaming sensor for sub-micron tracking and 10x power efficiency over previous generation. Pro-grade LIGHTSPEED wireless delivers ultralow-latency for peak performance.',59.99,'Mouse')
+INSERT INTO Product VALUES(6, 'G SERIES G840 Extra-Large Cloth Gaming Mouse Pad', 'Full desktop gaming mouse pad with space to configure your setup the way you want. Surface texture is performance-tuned for Logitech G mice. Rubber base stays in place for focus and control in-game.',39.99,'Mouse Pad')
+'''
+
 # Iterate through each line of random_inserts:
-# for line in random_inserts.splitlines():
-#     cursor.execute(line)
-#     mydb.commit()
+for line in additional_random_inserts.splitlines():
+    cursor.execute(line)
+    mydb.commit()
 #------------------------------------------------------
 
 # STARTING QUERIES/FUNCTIONS TO BE CALLED FROM FRONTEND
 # Queries for all tables
 
 # Set list of existing tables:
-existing_tables = {"Categories", "Customer", "Inventory", "Order_Item", "Orders", "Product", "Product_View"}
+existing_tables = {"Categories", "Customer", "Inventory", "Cart", "Orders", "Product", "Product_View"}
 
 # Function that can retrieve all contents of a table, with the table name as the input
 def get_table_contents(table_name):
@@ -312,7 +321,7 @@ def get_inventory_by_product(productID):
 def decrease_inventory_after_order(orderID):
     get_order_items_query = '''
     SELECT ProductID, Quantity
-    FROM Order_Item
+    FROM Cart
     WHERE OrderID = %s;
     '''
     
@@ -406,7 +415,7 @@ def add_order_item(orderID, productID, quantity):
 def get_order_items(orderID):
     get_items_query = '''
     SELECT oi.ProductID, p.Name, oi.Quantity, oi.Price
-    FROM Order_Item oi
+    FROM Cart oi
     JOIN Product p ON oi.ProductID = p.ProductID
     WHERE oi.OrderID = %s;
     '''
@@ -427,8 +436,9 @@ def get_order_items(orderID):
 # create_products_view("2", "1")
 
 
+
+
 # Close all connections
 cursor.close()
 mydb.close()
 print("Connections Closed!")
-
