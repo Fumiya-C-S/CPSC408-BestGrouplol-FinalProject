@@ -269,9 +269,153 @@ def create_products_view(productID, customerID):
 
 
 # Inventory Product Table Queries:
+
+# Add a new inventory entry for a product at a location
+def create_inventory_entry(inventoryID, productID, location, quantity):
+    create_inventory_query = '''
+    INSERT INTO Inventory (InventoryID, ProductID, Location, Quantity)
+    VALUES (%s, %s, %s, %s);
+    '''
+    
+    cursor.execute(create_inventory_query, (inventoryID, productID, location, quantity))
+    mydb.commit()
+    print("Successfully added new inventory entry.")
+    return
+
+# Update inventory quantity for a product (negative to decrease, positive to increase)
+def update_inventory_quantity(productID, location, quantity_change):
+    update_inventory_query = '''
+    UPDATE Inventory
+    SET Quantity = Quantity + %s
+    WHERE ProductID = %s AND Location = %s;
+    '''
+    
+    cursor.execute(update_inventory_query, (quantity_change, productID, location))
+    mydb.commit()
+    print(f"Successfully updated inventory for ProductID {productID}.")
+    return
+
+# Get all inventory locations and quantities for a specific product
+def get_inventory_by_product(productID):
+    get_inventory_query = '''
+    SELECT Location, Quantity
+    FROM Inventory
+    WHERE ProductID = %s;
+    '''
+    
+    cursor.execute(get_inventory_query, (productID,))
+    result = cursor.fetchall()
+    print(result)
+    return result
+
+# Decrease inventory quantities after an order is placed
+def decrease_inventory_after_order(orderID):
+    get_order_items_query = '''
+    SELECT ProductID, Quantity
+    FROM Order_Item
+    WHERE OrderID = %s;
+    '''
+    
+    cursor.execute(get_order_items_query, (orderID,))
+    order_items = cursor.fetchall()
+    
+    for item in order_items:
+        productID = item[0]
+        quantity_ordered = item[1]
+
+        decrease_query = '''
+        UPDATE Inventory
+        SET Quantity = Quantity - %s
+        WHERE ProductID = %s
+        LIMIT 1;
+        '''
+        
+        cursor.execute(decrease_query, (quantity_ordered, productID))
+
+    mydb.commit()
+    print(f"Inventory updated for Order {orderID}.")
+    return        
+
 # def create_
 
 # Categories Table Queries
+
+# Add a new category entry for a product
+def create_new_category(productID, parentCategory, name):
+    create_category_query = '''
+    INSERT INTO Categories (ProductID, ParentCategory, Name)
+    VALUES (%s, %s, %s);
+    '''
+    
+    cursor.execute(create_category_query, (productID, parentCategory, name))
+    mydb.commit()
+    print("Successfully added new category.")
+    return
+
+# Get all products in a specific category
+def get_products_by_category(categoryName):
+    get_by_category_query = '''
+    SELECT p.ProductID, p.Name, p.Description, p.Price
+    FROM Product p
+    JOIN Categories c ON p.ProductID = c.ProductID
+    WHERE c.Name = %s;
+    '''
+    
+    cursor.execute(get_by_category_query, (categoryName,))
+    result = cursor.fetchall()
+    print(result)
+    return result
+
+# Get all products under a parent category
+def get_products_by_parent_category(parentCategory):
+    get_by_parent_query = '''
+    SELECT p.ProductID, p.Name, p.Price, c.Name as SubCategory
+    FROM Product p
+    JOIN Categories c ON p.ProductID = c.ProductID
+    WHERE c.ParentCategory = %s;
+    '''
+    
+    cursor.execute(get_by_parent_query, (parentCategory,))
+    result = cursor.fetchall()
+    print(result)
+    return result
+
+# Add an item to an order
+def add_order_item(orderID, productID, quantity):
+    get_price_query = '''
+    SELECT Price
+    FROM Product
+    WHERE ProductID = %s;
+    '''
+    
+    cursor.execute(get_price_query, (productID,))
+    price = cursor.fetchone()[0]
+    total_price = price * quantity
+    
+    add_item_query = '''
+    INSERT INTO Order_Item (OrderID, ProductID, Quantity, Price)
+    VALUES (%s, %s, %s, %s);
+    '''
+    
+    cursor.execute(add_item_query, (orderID, productID, quantity, total_price))
+    mydb.commit()
+    print("Successfully added item to order.")
+    return
+
+# Get all items in a specific order
+def get_order_items(orderID):
+    get_items_query = '''
+    SELECT oi.ProductID, p.Name, oi.Quantity, oi.Price
+    FROM Order_Item oi
+    JOIN Product p ON oi.ProductID = p.ProductID
+    WHERE oi.OrderID = %s;
+    '''
+    
+    cursor.execute(get_items_query, (orderID,))
+    result = cursor.fetchall()
+    print(result)
+    return result
+
 # def create_new_category(productID, )
 
 
