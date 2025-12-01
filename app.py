@@ -148,8 +148,6 @@ ALTER TABLE Categories ADD COLUMN is_deleted BOOLEAN;
 ALTER TABLE Inventory ADD COLUMN is_deleted BOOLEAN;
 '''
 
-
-
 # RUN BELOW CODE CHUNK FOR UPDATED QUERIES
 # Iterate through each line of random_inserts and additional_random_inserts:
 # for line in random_inserts.splitlines():
@@ -159,10 +157,6 @@ ALTER TABLE Inventory ADD COLUMN is_deleted BOOLEAN;
 # for line in additional_random_inserts.splitlines():
 #     cursor.execute(line)
 #     mydb.commit()
-
-# Add is_deleted to Customer Table
-# cursor.execute(add_is_deleted)
-# mydb.commit()
 
 # Add is_deleted to all tables
 # for line in add_is_deleted.splitlines():
