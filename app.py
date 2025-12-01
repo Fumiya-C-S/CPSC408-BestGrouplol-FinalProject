@@ -125,9 +125,9 @@ INSERT INTO Product_VIEW VALUES(3,3);
 INSERT INTO Orders VALUES(1,NOW(), 13.99, 'Shipping', 1);
 INSERT INTO Orders VALUES(2,NOW(), 140.00, 'Ordered', 2);
 INSERT INTO Orders VALUES(3,NOW(), 34.89, 'Delivered', 3);
-INSERT INTO Order_Item VALUES(1,1,2,199.98);
-INSERT INTO Order_Item VALUES(2,1,1,99.99);
-INSERT INTO Order_Item VALUES(3,3,1,34.89);
+INSERT INTO Cart VALUES(1,1,2,199.98);
+INSERT INTO Cart VALUES(2,1,1,99.99);
+INSERT INTO Cart VALUES(3,3,1,34.89);
 '''
 
 additional_random_inserts = '''
@@ -139,10 +139,37 @@ INSERT INTO Product VALUES(5, 'G SERIES G703 LIGHTSPEED Wireless Gaming Mouse', 
 INSERT INTO Product VALUES(6, 'G SERIES G840 Extra-Large Cloth Gaming Mouse Pad', 'Full desktop gaming mouse pad with space to configure your setup the way you want. Surface texture is performance-tuned for Logitech G mice. Rubber base stays in place for focus and control in-game.',39.99,'Mouse Pad')
 '''
 
-# Iterate through each line of random_inserts:
-for line in additional_random_inserts.splitlines():
-    cursor.execute(line)
-    mydb.commit()
+# Queries to add is_deleted column to tables
+add_is_deleted = '''
+ALTER TABLE Customer ADD COLUMN is_deleted BOOLEAN;
+ALTER TABLE Orders ADD COLUMN is_deleted BOOLEAN;
+ALTER TABLE Product ADD COLUMN is_deleted BOOLEAN;
+ALTER TABLE Categories ADD COLUMN is_deleted BOOLEAN;
+ALTER TABLE Inventory ADD COLUMN is_deleted BOOLEAN;
+'''
+
+
+
+# RUN BELOW CODE CHUNK FOR UPDATED QUERIES
+# Iterate through each line of random_inserts and additional_random_inserts:
+# for line in random_inserts.splitlines():
+#     cursor.execute(line)
+#     mydb.commit()
+
+# for line in additional_random_inserts.splitlines():
+#     cursor.execute(line)
+#     mydb.commit()
+
+# Add is_deleted to Customer Table
+# cursor.execute(add_is_deleted)
+# mydb.commit()
+
+# Add is_deleted to all tables
+# for line in add_is_deleted.splitlines():
+#     cursor.execute(line)
+#     mydb.commit()
+
+
 #------------------------------------------------------
 
 # STARTING QUERIES/FUNCTIONS TO BE CALLED FROM FRONTEND
@@ -171,16 +198,39 @@ def get_table_contents(table_name):
 
 # Customer Table Queries:
 def create_new_customer(name, address, email):
-
     create_new_customer_query = '''
-    INSERT INTO Customer(name, address, email)
-    VALUES (%s, %s, %s);
+    INSERT INTO Customer(name, address, email, is_deleted)
+    VALUES (%s, %s, %s, 0);
     '''
 
     cursor.execute(create_new_customer_query, (name, address, email))
     mydb.commit()
 
     print("Successfully created new customer record.")
+    return
+
+
+def delete_customer_by_id(customerID):
+    delete_customer_by_id = '''
+    UPDATE Customer
+    SET is_deleted = 1
+    WHERE CustomerID = %s;
+    '''
+
+    cursor.execute(delete_customer_by_id, list(customerID))
+    mydb.commit()
+    return
+
+# Function to recover customer by CustomerID
+def recover_customer_by_id(customerID):
+    recover_customer_by_id = '''
+    UPDATE Customer
+    SET is_deleted = 0
+    WHERE CustomerID = %s;
+    '''
+
+    cursor.execute(recover_customer_by_id, list(customerID))
+    mydb.commit()
     return
 
 # Order Table Queries:
@@ -214,8 +264,8 @@ def create_new_order(customerID):
     # print(today)
 
     create_order = '''
-    INSERT INTO Orders(OrderDate, Total, Status, CustomerID)
-    VALUES(%s, %s, %s, %s)
+    INSERT INTO Orders(OrderDate, Total, Status, CustomerID, is_deleted)
+    VALUES(%s, %s, %s, %s, 0)
     '''
 
     cursor.execute(create_order, (today, total, "Ordered", customerID))
@@ -224,6 +274,30 @@ def create_new_order(customerID):
     # CALL FUNCTION THAT EDITS INVENTORY COUNTS !!!!!!
 
     print(cart_items)
+    return
+
+# Function to delete an order by OrderID
+def delete_order_by_id(orderID):
+    delete_order = '''
+    UPDATE Order
+    SET is_deleted = 1
+    WHERE OrderID = %s;
+    '''
+
+    cursor.execute(delete_order, list(orderID))
+    mydb.commit()
+    return
+
+# Function to recover an order by OrderID
+def recover_order_by_id(orderID):
+    recover_order = '''
+    UPDATE Order
+    SET is_deleted = 0
+    WHERE OrderID = %s;
+    '''
+
+    cursor.execute(recover_order, list(orderID))
+    mydb.commit()
     return
 
 # Cart Table Queries:
@@ -251,11 +325,68 @@ def add_to_cart(customerID, productID, quantity):
     mydb.commit()
     return
 
+# Get all items in a specific order
+def get_cart_items(orderID):
+    get_items_query = '''
+    SELECT oi.ProductID, p.Name, oi.Quantity, oi.Price
+    FROM Cart oi
+    JOIN Product p ON oi.ProductID = p.ProductID
+    WHERE oi.OrderID = %s;
+    '''
+    
+    cursor.execute(get_items_query, (orderID,))
+    result = cursor.fetchall()
+    print(result)
+    return result
+
+# Deletes an item from the cart or lower an product's quantity in cart (hard delete)
+def delete_item_from_cart(customerID, productID, quantity):
+    # First obtain quantity of product being deleted:
+    get_product_quantity = '''
+    SELECT Quantity
+    FROM Cart
+    WHERE CustomerID = %s AND ProductID = %s;
+    '''
+
+    cursor.execute(get_product_quantity, (customerID, productID))
+    result = cursor.fetchone()
+
+    # If product in cart doesn't exist:
+    if result is None:
+        print("Product not found in cart of the customer.")
+        return
+    
+    current_quantity = result[0]
+
+    # Check if item should be dropped or quantity to be decreased
+    if result == quantity:
+        # Drop row
+        delete_item = '''
+        DELETE FROM Cart
+        WHERE CustomerID = %s AND ProductID = %s;
+        '''
+
+        cursor.execute(delete_item, (customerID, productID))
+        mydb.commit()
+        return
+    else:
+        # Decrease the quantity of the product in the cart
+        decrease_quantity = '''
+        UPDATE Cart
+        SET quantity = %s
+        WHERE CustomerID = %s AND ProductID = %s;
+        '''
+
+        decrease_amount = current_quantity - quantity
+        cursor.execute(decrease_quantity, (decrease_amount, customerID, productID))
+        mydb.commit()
+        return
+
 # Products Table Queries:
 def create_new_product(name, description, price, category):
     create_new_product_query= '''
-    INSERT INTO Product(Name, Description, Price, Category)
-    VALUES(%s, %s, %s, %s);
+    INSERT INTO Product(Name, Description, Price, Category, is_deleted)
+    VALUES(%s, %s, %s, %s, 0);
     '''
 
     cursor.execute(create_new_product_query, (name, description, price, category))
@@ -264,26 +395,49 @@ def create_new_product(name, description, price, category):
     print("Successfully added new product.")
     return
 
-# Products View Table Queries:
-def create_products_view(productID, customerID):
-    add_product_viewed = '''
-    INSERT INTO Product_View(ProductID, CustomerID)
-    VALUES (%s, %s)
+# Delete product (soft delete)
+def delete_product_by_id(productID):
+    delete_product = '''
+    UPDATE Product
+    SET is_deleted = 1
+    WHERE ProductID = %s;
     '''
 
-    cursor.execute(add_product_viewed, (productID, customerID))
+    cursor.execute(delete_product, list(productID))
     mydb.commit()
-    print("Successfully Added A Product to a Customer's Viewed Products.")
     return
+
+# Function to recover customer by CustomerID
+def recover_product_by_id(productID):
+    recover_product = '''
+    UPDATE Product
+    SET is_deleted = 0
+    WHERE ProductID = %s;
+    '''
+
+    cursor.execute(recover_product, list(productID))
+    mydb.commit()
+    return
+
+# Products View Table Queries:
+# def create_products_view(productID, customerID):
+#     add_product_viewed = '''
+#     INSERT INTO Product_View(ProductID, CustomerID, is_deleted)
+#     VALUES (%s, %s, 0)
+#     '''
+
+#     cursor.execute(add_product_viewed, (productID, customerID))
+#     mydb.commit()
+#     print("Successfully Added A Product to a Customer's Viewed Products.")
+#     return
 
 
 # Inventory Product Table Queries:
-
 # Add a new inventory entry for a product at a location
 def create_inventory_entry(inventoryID, productID, location, quantity):
     create_inventory_query = '''
-    INSERT INTO Inventory (InventoryID, ProductID, Location, Quantity)
-    VALUES (%s, %s, %s, %s);
+    INSERT INTO Inventory (InventoryID, ProductID, Location, Quantity, is_deleted)
+    VALUES (%s, %s, %s, %s, 0);
     '''
     
     cursor.execute(create_inventory_query, (inventoryID, productID, location, quantity))
@@ -319,16 +473,16 @@ def get_inventory_by_product(productID):
 
 # Decrease inventory quantities after an order is placed
 def decrease_inventory_after_order(orderID):
-    get_order_items_query = '''
+    get_cart_query = '''
     SELECT ProductID, Quantity
     FROM Cart
     WHERE OrderID = %s;
     '''
     
-    cursor.execute(get_order_items_query, (orderID,))
-    order_items = cursor.fetchall()
+    cursor.execute(get_cart_query, (orderID,))
+    cart_items = cursor.fetchall()
     
-    for item in order_items:
+    for item in cart_items:
         productID = item[0]
         quantity_ordered = item[1]
 
@@ -345,15 +499,38 @@ def decrease_inventory_after_order(orderID):
     print(f"Inventory updated for Order {orderID}.")
     return        
 
-# def create_
+# Delete Inventory Item with ID (soft delete)
+def delete_category_by_id(inventoryID, productID):
+    delete_inventory = '''
+    UPDATE Inventory
+    SET is_deleted = 1
+    WHERE InventoryID = %s AND ProductID = %s;
+    '''
+
+    cursor.execute(delete_inventory, (inventoryID, productID))
+    mydb.commit()
+    return
+
+# Function to recover Inventory Ite, by inventoryID
+def recover_category_by_id(inventoryID, productID):
+    recover_inventory = '''
+    UPDATE Inventory
+    SET is_deleted = 0
+    WHERE InventoryID = %s AND ProductID = %s;
+    '''
+
+    cursor.execute(recover_inventory, (inventoryID, productID))
+    mydb.commit()
+    return
+
+
 
 # Categories Table Queries
-
 # Add a new category entry for a product
 def create_new_category(productID, parentCategory, name):
     create_category_query = '''
-    INSERT INTO Categories (ProductID, ParentCategory, Name)
-    VALUES (%s, %s, %s);
+    INSERT INTO Categories (ProductID, ParentCategory, Name, is_deleted)
+    VALUES (%s, %s, %s, 0);
     '''
     
     cursor.execute(create_category_query, (productID, parentCategory, name))
@@ -389,41 +566,51 @@ def get_products_by_parent_category(parentCategory):
     print(result)
     return result
 
-# Add an item to an order
-def add_order_item(orderID, productID, quantity):
-    get_price_query = '''
-    SELECT Price
-    FROM Product
-    WHERE ProductID = %s;
+# Delete category by category ID(soft_Delete)
+def delete_category_by_id(categoryID):
+    delete_category = '''
+    UPDATE Category
+    SET is_deleted = 1
+    WHERE CategoriesID = %s;
     '''
-    
-    cursor.execute(get_price_query, (productID,))
-    price = cursor.fetchone()[0]
-    total_price = price * quantity
-    
-    add_item_query = '''
-    INSERT INTO Order_Item (OrderID, ProductID, Quantity, Price)
-    VALUES (%s, %s, %s, %s);
-    '''
-    
-    cursor.execute(add_item_query, (orderID, productID, quantity, total_price))
+
+    cursor.execute(delete_category, list(categoryID))
     mydb.commit()
-    print("Successfully added item to order.")
     return
 
-# Get all items in a specific order
-def get_order_items(orderID):
-    get_items_query = '''
-    SELECT oi.ProductID, p.Name, oi.Quantity, oi.Price
-    FROM Cart oi
-    JOIN Product p ON oi.ProductID = p.ProductID
-    WHERE oi.OrderID = %s;
+# Function to recover category by categoryID
+def recover_category_by_id(categoryID):
+    recover_category = '''
+    UPDATE Category
+    SET is_deleted = 0
+    WHERE CategoriesID = %s;
     '''
+
+    cursor.execute(recover_category, list(categoryID))
+    mydb.commit()
+    return
+
+# Add an item to an order
+# def add_item_to_cart(orderID, productID, quantity):
+#     get_price_query = '''
+#     SELECT Price
+#     FROM Product
+#     WHERE ProductID = %s;
+#     '''
     
-    cursor.execute(get_items_query, (orderID,))
-    result = cursor.fetchall()
-    print(result)
-    return result
+#     cursor.execute(get_price_query, (productID,))
+#     price = cursor.fetchone()[0]
+#     total_price = price * quantity
+    
+#     add_item_query = '''
+#     INSERT INTO Order_Item (OrderID, ProductID, Quantity, Price)
+#     VALUES (%s, %s, %s, %s);
+#     '''
+    
+#     cursor.execute(add_item_query, (orderID, productID, quantity, total_price))
+#     mydb.commit()
+#     print("Successfully added item to order.")
+#     return
 
 # def create_new_category(productID, )
 
