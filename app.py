@@ -584,6 +584,138 @@ def recover_category_by_id(categoryID):
     mydb.commit()
     return
 
+# Reports/Analytics 
+
+# Get total sales 
+def get_sales_by_category():
+    sales_by_category_query = '''
+    SELECT
+        p.Category,
+        COUNT(DISTINCT o.OrderID) AS TotalOrders,
+        SUM(ca.Quantity) AS TotalUnitsSold,
+        SUM(ca.Price) AS TotalRevenue
+    FROM Cart ca
+    JOIN Product p ON ca.ProductID = p.ProductID
+    JOIN Customer c ON ca.CustomerID = c.CustomerID
+    JOIN Orders o ON c.CustomerID = o.CustomerID
+    GROUP BY p.Category
+    ORDER BY TotalRevenue DESC;
+    '''
+
+    cursor.execute(sales_by_category_query)
+    result = cursor.fetchall()
+    print("Sales by Category:")
+    for row in result:
+        print(f"  {row[0]}: {row[1]} orders, {row[2]} units, ${row[3]:.2f} revenue")
+    return result
+
+# Get order count and total spending per customer
+def get_customer_order_summary():
+    customer_summary_query = '''
+    SELECT 
+        c.CustomerID,
+        c.Name,
+        COUNT(o.OrderID) AS NumberOfOrders,
+        COALESCE(SUM(o.Total), 0) AS TotalSpent,
+        AVG(o.Total) AS AverageOrderValue
+    FROM Customer c
+    LEFT JOIN Orders o ON c.CustomerID = o.CustomerID
+    WHERE c.is_deleted = 0
+    GROUP BY c.CustomerID, c.Name
+    ORDER BY TotalSpent DESC;
+    '''
+
+    cursor.execute(customer_summary_query)
+    result = cursor.fetchall()
+    print("Customer Order Summary:")
+    for row in result:
+        print(f"  {row[1]}: {row[2]} orders, ${row[3]:.2f} total spent")
+    return result
+
+# Get total inventory value grouped by location
+def get_inventory_summary_by_location():
+    inventory_summary_query = '''
+    SELECT 
+        i.Location,
+        COUNT(DISTINCT i.ProductID) AS NumberOfProducts,
+        SUM(i.Quantity) AS TotalUnits,
+        SUM(i.Quantity * p.Price) AS TotalInventoryValue
+    FROM Inventory i
+    JOIN Product p ON i.ProductID = p.ProductID
+    WHERE i.is_deleted = 0
+    GROUP BY i.Location
+    ORDER BY TotalInventoryValue DESC;
+    '''
+
+    cursor.execute(inventory_summary_query)
+    result = cursor.fetchall()
+    print("Inventory by Location:")
+    for row in result:
+        print(f"  {row[0]}: {row[1]} products, {row[2]} units, ${row[3]:.2f} value")
+    return result
+
+# Get customers who spent more than average
+def get_customers_with_above_average_spending():
+    above_avg_query = '''
+    SELECT c.CustomerID, c.Name, c.Email, SUM(o.Total) AS TotalSpent
+    FROM Customer c
+    JOIN Orders o ON c.CustomerID = o.CustomerID
+    WHERE c.is_deleted = 0 AND o.is_deleted = 0
+    GROUP BY c.CustomerID, c.Name, c.Email
+    HAVING SUM(o.Total) > (
+        SELECT AVG(Total) FROM Orders WHERE is_deleted = 0
+    )
+    ORDER BY TotalSpent DESC;
+    '''
+
+    cursor.execute(above_avg_query)
+    result = cursor.fetchall()
+    print("Customers with above-average spending:")
+    for row in result:
+        print(f"  {row[1]}: ${row[3]:.2f}")
+    return result
+
+# Get products that have never been in a cart
+def get_products_never_ordered():
+    never_ordered_query = '''
+    SELECT ProductID, Name, Price, Category
+    FROM Product
+    WHERE is_deleted = 0 AND ProductID NOT IN (
+        SELECT DISTINCT ProductID FROM Cart
+    );
+    '''
+    
+    cursor.execute(never_ordered_query)
+    result = cursor.fetchall()
+    print("Products never ordered:")
+    for row in result:
+        print(f"  {row[1]} (${row[2]:.2f})")
+    return result
+
+# Get products with inventory below threshold
+def get_low_stock_products():
+    low_stock_query = '''
+    SELECT p.ProductID, p.Name, p.Category,
+        (SELECT SUM(Quantity) FROM Inventory WHERE ProductID = p.ProductID) AS TotalStock
+    FROM Product p
+    WHERE p.is_deleted = 0
+    HAVING TotalStock < 10 OR TotalStock IS NULL
+    ORDER BY TotalStock ASC;
+    '''
+
+    cursor.execute(low_stock_query)
+    result = cursor.fetchall()
+    print("Low stock products:")
+    for row in result:
+        stock = row[3] if row[3] else 0
+        print(f"  {row[1]}: {stock} units")
+    return result
+
+# Database Views & Indexes 
+
+# Create database views
+
+
 # Add an item to an order
 # def add_item_to_cart(orderID, productID, quantity):
 #     get_price_query = '''
