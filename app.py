@@ -315,7 +315,7 @@ def process_order_with_transaction(customerID):
         if not cart_items:
             print("Cart is empty. No order created.")
             mydb.rollback()
-            return None;
+            return None
 
         # Calculate total
         total = sum(item[1] * item[2] for item in cart_items)
@@ -355,22 +355,22 @@ def process_order_with_transaction(customerID):
             '''
             cursor.execute(update_inventory_query, (quantity, productID))
 
-    # Clear cart
-    clear_cart_query = '''
-    DELETE FROM Cart WHERE CustomerID = %s;
-    '''
-    cursor.execute(clear_cart_query, (customerID,))
+        # Clear cart
+        clear_cart_query = '''
+        DELETE FROM Cart WHERE CustomerID = %s;
+        '''
+        cursor.execute(clear_cart_query, (customerID,))
 
-    # If everything succeeded, commit
-    mydb.commit()
-    print(f"Order {orderID} processed successfully!")
-    return orderID
+        # If everything succeeded, commit
+        mydb.commit()
+        print(f"Order {orderID} processed successfully!")
+        return orderID
 
-except Exception as e:
-    # If any error occurs, rollback all changes
-    mydb.rollback()
-    print(f"Transaction failed: {e}. All changes rolled back.")
-    return None
+    except Exception as e:
+        # If any error occurs, rollback all changes
+        mydb.rollback()
+        print(f"Transaction failed: {e}. All changes rolled back.")
+        return None
 
 
 # Update specific order status to "Shipping"
@@ -447,7 +447,7 @@ def add_to_cart(customerID, productID, quantity):
     return
 
 # Get all items in a specific order
-def get_cart_items(orderID):
+def get_cart_items(customerID):
     get_items_query = '''
     SELECT oi.ProductID, p.Name, oi.Quantity, oi.Price
     FROM Cart oi
@@ -621,7 +621,7 @@ def decrease_inventory_after_order(orderID):
     return        
 
 # Delete Inventory Item with ID (soft delete)
-def delete_category_by_id(inventoryID, productID):
+def delete_inventory_by_id(inventoryID, productID):
     delete_inventory = '''
     UPDATE Inventory
     SET is_deleted = 1
@@ -633,7 +633,7 @@ def delete_category_by_id(inventoryID, productID):
     return
 
 # Function to recover Inventory Ite, by inventoryID
-def recover_category_by_id(inventoryID, productID):
+def recover_inventory_by_id(inventoryID, productID):
     recover_inventory = '''
     UPDATE Inventory
     SET is_deleted = 0
@@ -690,7 +690,7 @@ def get_products_by_parent_category(parentCategory):
 # Delete category by category ID(soft_Delete)
 def delete_category_by_id(categoryID):
     delete_category = '''
-    UPDATE Category
+    UPDATE Categories
     SET is_deleted = 1
     WHERE CategoriesID = %s;
     '''
@@ -702,7 +702,7 @@ def delete_category_by_id(categoryID):
 # Function to recover category by categoryID
 def recover_category_by_id(categoryID):
     recover_category = '''
-    UPDATE Category
+    UPDATE Categories
     SET is_deleted = 0
     WHERE CategoriesID = %s;
     '''
@@ -841,6 +841,31 @@ def get_low_stock_products():
 # Database Views & Indexes 
 
 # Create database views
+# Create indexes for better query performance
+def create_indexes():
+    indexes = [
+        "CREATE INDEX idx_orders_customer ON Orders(CustomerID)",
+        "CREATE INDEX idx_orders_status ON Orders(Status)",
+        "CREATE INDEX idx_cart_customer ON Cart(CustomerID)",
+        "CREATE INDEX idx_cart_product ON Cart(ProductID)",
+        "CREATE INDEX idx_inventory_product ON Inventory(ProductID)",
+        "CREATE INDEX idx_inventory_location ON Inventory(Location)",
+        "CREATE INDEX idx_product_category ON ProductCategory(CategoriesID)"
+    ]
+
+    for index in indexes:
+        try:
+            cursor.execute(index)
+            print(f"Created: {index}")
+        except Exception as e:
+            print(f"Index may already exist: {e}")
+    mydb.commit()
+    print("Indexes created successfully!")
+    return
+
+# run create_indexes() once in MySQL
+
+
 # Return VIEW of orders of a specific user (Only show orderID, orderDate, and shipping status):
 def get_orders_for_id(userID):
     create_view = '''
