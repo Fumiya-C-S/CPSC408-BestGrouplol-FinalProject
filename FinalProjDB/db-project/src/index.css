@@ -112,7 +112,15 @@ body {
   font-size: 25px;
   cursor: pointer;
 }
+.orders-container {
+  text-align: center;
 
+}
+.order-list-item {
+  display: inline-block;
+  gap: 2;
+  font-size: 25px;
+}
 /* Navbar link styles */
 .nav-list a {
   color: inherit;
