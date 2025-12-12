@@ -1,18 +1,17 @@
-import { Link } from 'react-router-dom';
 import Cart from "./Cart";
-
+import {Link} from 'react-router-dom'
 function NavBar() {
     return(
-        <div className="navbar-display"> 
-            <ul className="nav-list">
-                <li><Link to="/">Home</Link></li>
-                <li>Orders</li>
-                <li><Link to="/about">About</Link></li>
-                <li>Account</li>
+        <>
+        <div className = "navbar-display"> 
+            <ul className = "nav-list">
+                <li key = "home"><Link to = '/'>Home  </Link></li>
+                <li key = "orders"> <Link to = '/orders'>Orders</Link></li>
+                <li key = "about"><Link to = '/about'> About</Link></li>
+                <Cart></Cart>
             </ul>
-            <Cart></Cart>
         </div>
+        </>
     );
 }
-
 export default NavBar
