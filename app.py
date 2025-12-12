@@ -297,6 +297,82 @@ def create_new_order(customerID):
     print(cart_items)
     return
 
+# Process an order using transaction, if anything fails, rollback everything, creates an order from cart items and updates inventory atomically
+def process_order_with_transaction(customerID):
+    try:
+        # Start transaction
+        mydb.start_transaction()
+
+        # Get cart items for customer
+        get_cart_query = '''
+        SELECT ProductID, Quantity, Price
+        FROM Cart
+        WHERE CustomerID = %s;
+        '''
+        cursor.execute(get_cart_query, (customerID,))
+        cart_items = cursor.fetchall()
+
+        if not cart_items:
+            print("Cart is empty. No order created.")
+            mydb.rollback()
+            return None;
+
+        # Calculate total
+        total = sum(item[1] * item[2] for item in cart_items)
+
+        # Create the order
+        create_order_query = '''
+        INSERT INTO Orders (OrderDate, Total, Status, CustomerID, is_deleted)
+        VALUES (CURDATE(), %s, 'Ordered', %s, 0);
+        '''
+        cursor.execute(create_order_query, (total, customerID))
+        orderID = cursor.lastrowid
+
+        # Update invnetory for each item
+        for item in cart_items:
+            productID, quantity, price = item
+
+            # Check inventory first
+            check_inventory_query = '''
+            SELECT SUM(Quantity) FROM Inventory
+            WHERE ProductID = %s AND is_deleted = 0;
+            '''
+            cursor.execute(check_inventory_query, (productID,))
+            inventory_result = cursor.fetchone()
+
+            if inventory_result[0] is None or inventory_result[0] < quantity:
+                # Not enough inventory, rollback everything
+                mydb.rollback()
+                print(f"Insufficient inventory for ProductID {productID}. Order cancelled.")
+                return None
+
+            # Decrease Inventory
+            update_inventory_query = '''
+            UPDATE Inventory
+            SET Quantity = Quantity - %s
+            WHERE ProductID = %s AND is_deleted = 0
+            LIMIT 1;
+            '''
+            cursor.execute(update_inventory_query, (quantity, productID))
+
+    # Clear cart
+    clear_cart_query = '''
+    DELETE FROM Cart WHERE CustomerID = %s;
+    '''
+    cursor.execute(clear_cart_query, (customerID,))
+
+    # If everything succeeded, commit
+    mydb.commit()
+    print(f"Order {orderID} processed successfully!")
+    return orderID
+
+except Exception as e:
+    # If any error occurs, rollback all changes
+    mydb.rollback()
+    print(f"Transaction failed: {e}. All changes rolled back.")
+    return None
+
+
 # Update specific order status to "Shipping"
 def change_status_shipping(orderID):
     change_status = '''
