@@ -1,5 +1,6 @@
 # Library Imports
 import mysql.connector
+import pandas as pd
 import time
 from datetime import date
 
@@ -104,6 +105,19 @@ CREATE TABLE Inventory(
 );
 '''
 # cursor.execute(create_inventory_table)
+
+# Create Product-Category Table for M-M Relationship
+create_product_category = '''
+CREATE TABLE ProductCategory(
+    ProductID  INT NOT NULL,
+    CategoriesID INT NOT NULL,
+    FOREIGN KEY (ProductID) REFERENCES Product(ProductID),
+    FOREIGN KEY (CategoriesID) REFERENCES Categories(CategoriesID),
+    PRIMARY KEY (ProductID, CategoriesID)
+);
+'''
+# cursor.execute(create_product_category)
+
 #------------------------------------------------------
 # Insert random rows into tables:
 random_inserts = '''
@@ -148,6 +162,16 @@ ALTER TABLE Categories ADD COLUMN is_deleted BOOLEAN;
 ALTER TABLE Inventory ADD COLUMN is_deleted BOOLEAN;
 '''
 
+additional_updating_queries = '''
+ALTER TABLE Categories DROP CONSTRAINT categories_ibfk_1;
+ALTER TABLE Categories DROP COLUMN ProductID;
+ALTER TABLE Product DROP COLUMN Category;
+INSERT INTO ProductCategory VALUES(1, 1);
+INSERT INTO ProductCategory VALUES(2, 2);
+INSERT INTO ProductCategory VALUES(3, 3);
+INSERT INTO ProductCategory VALUES(4, 3);
+'''
+
 # RUN BELOW CODE CHUNK FOR UPDATED QUERIES
 # Iterate through each line of random_inserts and additional_random_inserts:
 # for line in random_inserts.splitlines():
@@ -163,6 +187,9 @@ ALTER TABLE Inventory ADD COLUMN is_deleted BOOLEAN;
 #     cursor.execute(line)
 #     mydb.commit()
 
+# for line in additional_updating_queries.splitlines():
+#     cursor.execute(line)
+#     mydb.commit()
 
 #------------------------------------------------------
 
@@ -270,10 +297,34 @@ def create_new_order(customerID):
     print(cart_items)
     return
 
+# Update specific order status to "Shipping"
+def change_status_shipping(orderID):
+    change_status = '''
+    UPDATE Orders
+    SET Status = "Shipping"
+    WHERE OrderID = %s;
+    '''
+
+    cursor.execute(change_status, list(orderID))
+    mydb.commit()
+    return
+
+def change_status_delivered(orderID):
+    change_status = '''
+    UPDATE Orders
+    SET Status = "Delivered"
+    WHERE OrderID = %s;
+    '''
+
+    cursor.execute(change_status, list(orderID))
+    mydb.commit()
+    return
+
+
 # Function to delete an order by OrderID
 def delete_order_by_id(orderID):
     delete_order = '''
-    UPDATE Order
+    UPDATE Orders
     SET is_deleted = 1
     WHERE OrderID = %s;
     '''
@@ -285,7 +336,7 @@ def delete_order_by_id(orderID):
 # Function to recover an order by OrderID
 def recover_order_by_id(orderID):
     recover_order = '''
-    UPDATE Order
+    UPDATE Orders
     SET is_deleted = 0
     WHERE OrderID = %s;
     '''
@@ -714,6 +765,37 @@ def get_low_stock_products():
 # Database Views & Indexes 
 
 # Create database views
+# Return VIEW of orders of a specific user (Only show orderID, orderDate, and shipping status):
+def get_orders_for_id(userID):
+    create_view = '''
+    CREATE VIEW users_order AS
+    SELECT o.OrderID, o.OrderDate, o.Status
+    FROM Orders AS o
+    WHERE CustomerID = %s;
+    '''
+
+    cursor.execute(create_view, list(userID))
+    mydb.commit()
+    return
+
+
+# Export to Excel:
+def export_excel_all_warehouse_inventory(output_file_name):
+    get_all_inventory = '''
+    SELECT p.ProductID, p.Name, SUM(i.Quantity) AS TotalQuantity
+    FROM Inventory AS i
+    INNER JOIN Product AS p
+    ON i.ProductID = p.ProductID
+    GROUP BY p.ProductID;
+    '''
+
+    results = pd.read_sql(get_all_inventory, mydb)
+
+    results.to_excel(output_file_name)
+
+    print(results)
+
+    return results
 
 
 # Add an item to an order
@@ -738,8 +820,6 @@ def get_low_stock_products():
 #     print("Successfully added item to order.")
 #     return
 
-# def create_new_category(productID, )
-
 
 # Main Function (testing area)
 # get_table_contents("Customer")
@@ -747,8 +827,9 @@ def get_low_stock_products():
 # add_to_cart("1", "3", 1)
 # create_new_order("1")
 # create_products_view("2", "1")
-
-
+# get_orders_for_id("2")
+# change_status_delivered("2")
+export_excel_all_warehouse_inventory("test.xlsx")
 
 
 # Close all connections
