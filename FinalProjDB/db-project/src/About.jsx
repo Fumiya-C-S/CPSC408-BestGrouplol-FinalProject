@@ -5,13 +5,14 @@ import NavBar from './NavBar';
 function About() {
   return (
     <>
-      <NavBar />
-      <div className="about-container">
-        <header className="about-header">
+      <NavBar /> {/* Have a navigaiton bar instance */}
+      <div className="about-container"> {/* Div for the about container */}
+        <header className="about-header"> {/*Div for the about header */}
+          {/* Header and information about our website */}
           <h1>About Our E-Commerce Platform</h1>
           <p className="tagline">A Database Management Systems Final Project</p>
         </header>
-
+        {/* Goes over our project overview section using h2 and p tags */}
         <section className="about-section">
           <h2>Project Overview</h2>
           <p>
@@ -20,12 +21,13 @@ function About() {
             opportunity to demonstrate the core concepts of database design and management in a real-world context.
           </p>
         </section>
-
+        {/* Goes over why we chose E-Commerce */}
         <section className="about-section">
           <h2>Why E-Commerce?</h2>
           <p>
             E-commerce platforms are perfect for showcasing database principles because they involve:
           </p>
+          {/* Goes into more detail about the reason for choosing it.  */}
           <div className="features">
             <div className="feature">
               <h3>Complex Relationships</h3>
@@ -44,7 +46,7 @@ function About() {
             </div>
           </div>
         </section>
-
+        {/* Explains what we used in our project */}
         <section className="about-section">
           <h2>Technical Implementation</h2>
           <p>
@@ -54,7 +56,7 @@ function About() {
             integrate with modern web applications.
           </p>
         </section>
-
+        {/* Introduces the team  */}
         <section className="about-section team-section">
           <h2>Meet Our Team</h2>
           <div className="team-grid">
@@ -80,7 +82,7 @@ function About() {
             </div>
           </div>
         </section>
-
+        {/* Course info */}
         <section className="about-section contact-section">
           <h2>Course Information</h2>
           <p>CPSC 408 - Database Management Systems</p>

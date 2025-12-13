@@ -1,5 +1,7 @@
 import keyPic from './assets/keyboard1.png'
 function Header(props) {
+    //Header component which is more like a product component. 
+    // Takes in a props as a paramater and returns a div with an image, title, description, and price shown. 
     return (
         <>
         <div className = 'item'>
@@ -8,9 +10,6 @@ function Header(props) {
             <p className = 'item-description'>{props.description}</p>
             <p className = 'item-price'>{"$" + props.price}</p>
         </div>
-        {/* <div className = 'add-container'>
-            <AddButton/>
-        </div> */}
         </>
     );
 }
