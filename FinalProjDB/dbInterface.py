@@ -33,7 +33,7 @@ def get_db_connection():
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # our React web url
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Allow both
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
