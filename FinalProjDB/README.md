@@ -49,6 +49,8 @@
     Other than the Navigaiton bar which was more specific. The list of videos and docs allowed us to generally grasp what to do given our goals for react and setting up or backend with sql. 
 ## Minimum requirements met
     We were able to create a multitide of queries in our app.py but only able to incoroproate a hand full in our project. Nevertheless we did do a good effort on the project. 
+## Youtube Demo Link
+    https://www.youtube.com/watch?v=PcsuaUSYi_Q 
 ## LLM USAGE
     1. For using fastapi i was familiar of how to use get requests from youtube videos from the resource used. However I had an issue with post requests that CHATGPT helped resolve. 
     This was a stream of back and forth question and answers. 
