@@ -61,25 +61,21 @@ function About() {
             <div className="team-member">
               <div className="member-avatar">M</div>
               <h3>Miguel Tellez</h3>
-              <p>Backend Developer</p>
               <p className="member-email">mtellez@chapman.edu</p>
             </div>
             <div className="team-member">
               <div className="member-avatar">F</div>
               <h3>Fumi Shinagawa</h3>
-              <p>Database Administrator</p>
               <p className="member-email">shinagawa@chapman.edu</p>
             </div>
             <div className="team-member">
               <div className="member-avatar">C</div>
               <h3>Christopher Uy</h3>
-              <p>Frontend Developer</p>
               <p className="member-email">chuy@chapman.edu</p>
             </div>
             <div className="team-member">
               <div className="member-avatar">J</div>
               <h3>Jeffrey Bok</h3>
-              <p>UI/UX Designer</p>
               <p className="member-email">bok@chapman.edu</p>
             </div>
           </div>

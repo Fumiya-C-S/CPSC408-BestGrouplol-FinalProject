@@ -51,6 +51,30 @@ function CartPage({ cartItems = [], setCartItems }) {
       console.error("Error removing from cart:", error);
     }
   };
+  
+  const placeOrder = async () => {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/cart/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                customer_id: CUSTOMER_ID
+            })
+        });
+        
+        const data = await response.json();
+        alert(`Order placed successfully! Order #${data.order_id}`);
+        
+        // Clear cart display
+        setCartProducts([]);
+        
+    } catch (error) {
+        console.error("Error placing order:", error);
+        alert("Failed to place order");
+    }
+  };
 
   const totalPrice = cartProducts.reduce((sum, product) => sum + (product.Price * product.Quantity), 0);
 
@@ -137,6 +161,27 @@ function CartPage({ cartItems = [], setCartItems }) {
               borderTop: '2px solid #333'
             }}>
               Total: ${totalPrice.toFixed(2)}
+            </div>
+
+            {/* Place Order Button */}
+            <div style={{ textAlign: 'right', marginTop: '20px' }}>
+              <button 
+                onClick={placeOrder}
+                style={{
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  padding: '15px 40px',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                  fontWeight: 'bold'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
+              >
+                Place Order
+              </button>
             </div>
           </>
         )}

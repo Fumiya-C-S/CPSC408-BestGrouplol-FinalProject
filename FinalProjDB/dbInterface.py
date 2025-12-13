@@ -17,6 +17,8 @@ class CartAddRequest(BaseModel):
     customer_id: int
     product_id: int
     quantity: int
+class CheckoutRequest(BaseModel):
+    customer_id: int
 
 #Make Connection
 def get_db_connection():
@@ -140,3 +142,35 @@ def remove_from_cart(request: CartRemoveRequest, db_ops = Depends(get_db_connect
     cursor.close()
     
     return {"message": "Item removed from cart"}
+@app.post('/cart/checkout')
+def checkout_cart(request: CheckoutRequest, db_ops = Depends(get_db_connection)):
+    cursor = db_ops.cursor(dictionary=True)
+    
+    # Get all cart items for the customer
+    cursor.execute(
+        "SELECT ProductID, Quantity, Price FROM Cart WHERE CustomerID = %s",
+        (request.customer_id,)
+    )
+    cart_items = cursor.fetchall()
+    
+    if not cart_items:
+        cursor.close()
+        raise HTTPException(status_code=400, detail="Cart is empty")
+    
+    # Calculate total
+    total = sum(item['Quantity'] * item['Price'] for item in cart_items)
+    
+    # Create order
+    cursor.execute(
+        "INSERT INTO Orders (OrderDate, Total, Status, CustomerID) VALUES (CURDATE(), %s, 'Ordered', %s)",
+        (total, request.customer_id)
+    )
+    order_id = cursor.lastrowid
+    
+    # Clear the cart
+    cursor.execute("DELETE FROM Cart WHERE CustomerID = %s", (request.customer_id,))
+    
+    db_ops.commit()
+    cursor.close()
+    
+    return {"message": "Order placed successfully", "order_id": order_id}
