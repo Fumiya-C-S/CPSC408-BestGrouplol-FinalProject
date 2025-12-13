@@ -60,7 +60,7 @@ def get_cart(customer_id: int, db_ops = Depends(get_db_connection)):
     cursor = db_ops.cursor(dictionary = True)
     query = '''
     SELECT c.CustomerID, c.ProductID, c.Quantity, c.Price,
-           p.Name, p.Description
+           p.Name, p.Description, p.Category
     FROM Cart c
     JOIN Product p ON c.ProductID = p.ProductID
     WHERE c.CustomerID = %s
