@@ -5,10 +5,10 @@ class db_operations():
     # constructor with connection path to DB
     def __init__(self):
         self.connection = mysql.connector.connect(host="localhost",
-        user="root",
+        user="jeffery",
         password="CPSC408!",
         auth_plugin='mysql_native_password',
-        database="DB_Project")
+        database="eCommerce")
         # self.cursor = self.connection.cursor(dictionary = True)
         print("connection made..")
         # self.cursor.execute

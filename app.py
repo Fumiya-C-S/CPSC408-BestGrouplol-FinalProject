@@ -5,8 +5,8 @@ import time
 from datetime import date
 
 mydb = mysql.connector.connect(
-    host="fumiyas-macbook-pro-3.local",
-    user="bestgrouphost",
+    host="localhost",
+    user="jeffery",
     password="CPSC408!",
     database="eCommerce",
     auth_plugin='mysql_native_password'

@@ -4,7 +4,9 @@ import {createBrowserRouter, RouterProvider} from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 import CartPage from './CartPage.jsx'
-import About from './About.jsx'  // ADD THIS LINE!
+import About from './About.jsx'
+import Orders from './Orders.jsx'
+
 
 const router = createBrowserRouter([
 {
