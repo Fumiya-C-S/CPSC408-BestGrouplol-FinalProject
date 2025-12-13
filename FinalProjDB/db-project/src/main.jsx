@@ -7,22 +7,22 @@ import CartPage from './CartPage.jsx'
 import About from './About.jsx'
 import Orders from './Orders.jsx'
 
-
+//Creates a brower router instance with specified paths. 
 const router = createBrowserRouter([
 {
-  path: '/',
+  path: '/', //Homepage is our App.jsx
   element: <App/>
 },
 {
-  path: '/orders',
+  path: '/orders', //Orders page is our Orders.jsx
   element: <Orders/>
 },
 {
-  path: '/cart',
+  path: '/cart', //Cart is our CartPage.jsx
   element: <CartPage/>
 },
 {
-  path: '/about',
+  path: '/about', //About page is our About.jsx
   element: <About/>
 },
 ]);
